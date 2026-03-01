@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Opus 4.6 — Model Comparison 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Design tokens ─────────────────────────────── */
+  :root {
+    --bg:          #f8f9fc;
+    --surface:     #ffffff;
+    --border:      #e2e6ed;
+    --border-soft: #eef0f5;
+
+    --text-primary:   #111827;
+    --text-secondary: #4b5563;
+    --text-muted:     #9ca3af;
+
+    --claude-base:  #7c3aed;
+    --claude-light: #ede9fe;
+    --claude-mid:   #a78bfa;
+
+    --sonnet-base:  #6366f1;
+    --sonnet-light: #e0e7ff;
+    --sonnet-mid:   #a5b4fc;
+
+    --gpt-base:     #059669;
+    --gpt-light:    #d1fae5;
+    --gpt-mid:      #6ee7b7;
+
+    --gemini-base:  #2563eb;
+    --gemini-light: #dbeafe;
+    --gemini-mid:   #93c5fd;
+
+    --gold:         #d97706;
+    --gold-light:   #fef3c7;
+    --green:        #059669;
+    --green-light:  #d1fae5;
+    --red:          #dc2626;
+    --red-light:    #fee2e2;
+    --amber:        #b45309;
+    --amber-light:  #fef9c3;
+
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Header ─── */
+  .header { margin-bottom: 36px; }
+
+  .header-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--claude-light);
+    color: var(--claude-base);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .header-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--claude-base);
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  h1 em { font-style: normal; color: var(--claude-base); }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-secondary);
+  }
+
+  /* ── Legend ─── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .legend-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 2px;
+  }
+  .legend-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1.5px solid transparent;
+  }
+  .legend-pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pill-claude { background: var(--claude-light); color: var(--claude-base); border-color: #c4b5fd; }
+  .pill-sonnet { background: var(--sonnet-light); color: var(--sonnet-base); border-color: #c7d2fe; }
+  .pill-gpt    { background: var(--gpt-light);    color: var(--gpt-base);    border-color: #a7f3d0; }
+  .pill-gemini { background: var(--gemini-light); color: var(--gemini-base); border-color: #bfdbfe; }
+  .pip-claude  { background: var(--claude-base); }
+  .pip-sonnet  { background: var(--sonnet-base); }
+  .pip-gpt     { background: var(--gpt-base); }
+  .pip-gemini  { background: var(--gemini-base); }
+  .legend-star { font-size: 13px; color: var(--gold); margin-left: 6px; }
+  .legend-star-label { font-size: 12px; color: var(--text-secondary); }
+
+  /* ── Card & table ─── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+  }
+
+  /* ── Column headers ─── */
+  thead tr {
+    background: #fafbfe;
+    border-bottom: 2px solid var(--border);
+  }
+  th {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+  th:first-child {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    width: 18%;
+  }
+  .th-inner { display: flex; flex-direction: column; gap: 5px; }
+  .th-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .col-bar { display: block; height: 3px; border-radius: 2px; margin-bottom: 12px; }
+  .bar-c { background: var(--claude-base); }
+  .bar-s { background: var(--sonnet-base); }
+  .bar-g { background: var(--gpt-base); }
+  .bar-m { background: var(--gemini-base); }
+  .th-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    width: fit-content;
+  }
+  .th-badge .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .badge-c { background: var(--claude-light); color: var(--claude-base); }
+  .badge-c .dot { background: var(--claude-base); }
+  .badge-s { background: var(--sonnet-light); color: var(--sonnet-base); }
+  .badge-s .dot { background: var(--sonnet-base); }
+  .badge-g { background: var(--gpt-light);    color: var(--gpt-base); }
+  .badge-g .dot { background: var(--gpt-base); }
+  .badge-m { background: var(--gemini-light); color: var(--gemini-base); }
+  .badge-m .dot { background: var(--gemini-base); }
+
+  /* ── Section rows ─── */
+  tr.section {
+    background: #f3f4f8;
+    border-top: 1.5px solid var(--border);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  tr.section td {
+    padding: 8px 20px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  /* ── Data rows ─── */
+  tbody tr:not(.section) {
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.1s;
+  }
+  tbody tr:not(.section):hover { background: #f9faff; }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 13px 20px;
+    vertical-align: middle;
+    font-size: 13.5px;
+  }
+  td:first-child {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border-soft);
+    line-height: 1.4;
+  }
+  .row-note {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* ── Values ─── */
+  .val { color: var(--text-primary); }
+  .val-strong { font-weight: 600; color: var(--text-primary); }
+
+  .best { display: inline-flex; align-items: center; gap: 5px; }
+  .best-star { font-size: 11px; color: var(--gold); flex-shrink: 0; }
+
+  /* ── Score bars ─── */
+  .score { display: flex; align-items: center; gap: 10px; }
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 48px;
+  }
+  .bar-track {
+    flex: 1;
+    max-width: 90px;
+    height: 6px;
+    background: var(--border-soft);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .fill-c { background: linear-gradient(90deg, var(--claude-mid), var(--claude-base)); }
+  .fill-s { background: linear-gradient(90deg, var(--sonnet-mid), var(--sonnet-base)); }
+  .fill-g { background: linear-gradient(90deg, var(--gpt-mid),    var(--gpt-base)); }
+  .fill-m { background: linear-gradient(90deg, var(--gemini-mid), var(--gemini-base)); }
+
+  /* ── Tags ─── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+  .tag-yes  { background: var(--green-light);  color: var(--green); }
+  .tag-no   { background: var(--red-light);    color: var(--red); }
+  .tag-beta { background: var(--amber-light);  color: var(--amber); }
+  .tag-new  { background: var(--claude-light); color: var(--claude-base); }
+  .tag::before { font-size: 10px; flex-shrink: 0; }
+  .tag-yes::before  { content: '✓'; }
+  .tag-no::before   { content: '✕'; }
+  .tag-beta::before { content: '⧗'; }
+  .tag-new::before  { content: '✦'; }
+
+  /* ── Use-case ─── */
+  .use-case { font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+  .use-case.highlight { color: var(--claude-base); font-weight: 500; }
+
+  /* ── Footnote ─── */
+  .footnote {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    box-shadow: var(--shadow-sm);
+  }
+  .footnote strong { color: var(--text-primary); font-weight: 600; }
+
+  @media (max-width: 600px) {
+    .page { padding: 24px 12px 60px; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="header-tag">AI Model Analysis · March 2026</div>
+    <h1>Claude <em>Opus 4.6</em> vs The Field</h1>
+    <p class="subtitle">Benchmarks, pricing &amp; capabilities across frontier AI models</p>
+  </header>
+
+  <div class="legend">
+    <span class="legend-label">Models:</span>
+    <span class="legend-pill pill-claude"><span class="legend-pip pip-claude"></span>Claude Opus 4.6</span>
+    <span class="legend-pill pill-sonnet"><span class="legend-pip pip-sonnet"></span>Claude Sonnet 4.6</span>
+    <span class="legend-pill pill-gpt"><span class="legend-pip pip-gpt"></span>GPT-5.2</span>
+    <span class="legend-pill pill-gemini"><span class="legend-pip pip-gemini"></span>Gemini 3 Pro</span>
+    <span class="legend-star">★</span>
+    <span class="legend-star-label">Best in class</span>
+  </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>
+              <span class="col-bar bar-c"></span>
+              <div class="th-inner">
+                <span class="th-name">Claude Opus 4.6</span>
+                <span class="th-badge badge-c"><span class="dot"></span>Anthropic</span>
+              </div>
+            </th>
+            <th>
+              <span class="col-bar bar-s"></span>
+              <div class="th-inner">
+                <span class="th-name">Claude Sonnet 4.6</span>
+                <span class="th-badge badge-s"><span class="dot"></span>Anthropic</span>
+              </div>
+            </th>
+            <th>
+              <span class="col-bar bar-g"></span>
+              <div class="th-inner">
+                <span class="th-name">GPT-5.2</span>
+                <span class="th-badge badge-g"><span class="dot"></span>OpenAI</span>
+              </div>
+            </th>
+            <th>
+              <span class="col-bar bar-m"></span>
+              <div class="th-inner">
+                <span class="th-name">Gemini 3 Pro</span>
+                <span class="th-badge badge-m"><span class="dot"></span>Google</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr class="section"><td colspan="5">Overview</td></tr>
+
+          <tr>
+            <td>Release Date</td>
+            <td><span class="val val-strong">Feb 5, 2026</span></td>
+            <td><span class="val val-strong">Feb 2026</span></td>
+            <td><span class="val">Dec 2025</span></td>
+            <td><span class="val">Nov 2025</span></td>
+          </tr>
+          <tr>
+            <td>Developer</td>
+            <td><span class="val">Anthropic</span></td>
+            <td><span class="val">Anthropic</span></td>
+            <td><span class="val">OpenAI</span></td>
+            <td><span class="val">Google</span></td>
+          </tr>
+          <tr>
+            <td>Modalities</td>
+            <td><span class="val">Text · Image</span></td>
+            <td><span class="val">Text · Image</span></td>
+            <td><span class="val">Text · Image</span></td>
+            <td><span class="best"><span class="val val-strong">Text · Image · Video · Audio</span><span class="best-star">★</span></span></td>
+          </tr>
+
+          <tr class="section"><td colspan="5">Context &amp; Output</td></tr>
+
+          <tr>
+            <td>Context Window</td>
+            <td><span class="best"><span class="val val-strong">200K (1M beta)</span><span class="best-star">★</span></span></td>
+            <td><span class="val">200K (1M beta)</span></td>
+            <td><span class="val">400K tokens</span></td>
+            <td><span class="val">1M tokens — GA</span></td>
+          </tr>
+          <tr>
+            <td>Max Output Tokens</td>
+            <td><span class="best"><span class="val val-strong">128K tokens</span><span class="best-star">★</span></span></td>
+            <td><span class="val">64K tokens</span></td>
+            <td><span class="val">128K tokens</span></td>
+            <td><span class="val">~64K tokens</span></td>
+          </tr>
+
+          <tr class="section"><td colspan="5">API Pricing — per 1 million tokens</td></tr>
+
+          <tr>
+            <td>Input Price</td>
+            <td><span class="val">$5.00</span></td>
+            <td><span class="val">$3.00</span></td>
+            <td><span class="best"><span class="val val-strong">$1.75</span><span class="best-star">★</span></span></td>
+            <td><span class="val">$2.00</span></td>
+          </tr>
+          <tr>
+            <td>Output Price</td>
+            <td><span class="val">$25.00</span></td>
+            <td><span class="val">$15.00</span></td>
+            <td><span class="val">$14.00</span></td>
+            <td><span class="best"><span class="val val-strong">$12.00</span><span class="best-star">★</span></span></td>
+          </tr>
+          <tr>
+            <td>Batch Discount</td>
+            <td><span class="tag tag-yes">50% off</span></td>
+            <td><span class="tag tag-yes">50% off</span></td>
+            <td><span class="tag tag-yes">Available</span></td>
+            <td><span class="tag tag-yes">Available</span></td>
+          </tr>
+
+          <tr class="section"><td colspan="5">Key Benchmark Scores</td></tr>
+
+          <tr>
+            <td>SWE-bench Verified <span class="row-note">Coding agent tasks</span></td>
+            <td><div class="score"><span class="score-num best">80.8%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-c" style="width:80.8%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~75%</span><div class="bar-track"><div class="bar-fill fill-s" style="width:75%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~64.7%</span><div class="bar-track"><div class="bar-fill fill-g" style="width:64.7%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~43%</span><div class="bar-track"><div class="bar-fill fill-m" style="width:43%"></div></div></div></td>
+          </tr>
+          <tr>
+            <td>ARC-AGI-2 <span class="row-note">Novel reasoning</span></td>
+            <td><div class="score"><span class="score-num best">68.8%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-c" style="width:68.8%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~50%</span><div class="bar-track"><div class="bar-fill fill-s" style="width:50%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~54.2%</span><div class="bar-track"><div class="bar-fill fill-g" style="width:54.2%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~45%</span><div class="bar-track"><div class="bar-fill fill-m" style="width:45%"></div></div></div></td>
+          </tr>
+          <tr>
+            <td>GPQA Diamond <span class="row-note">Graduate science</span></td>
+            <td><div class="score"><span class="score-num best">91%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-c" style="width:91%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~82%</span><div class="bar-track"><div class="bar-fill fill-s" style="width:82%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~85%</span><div class="bar-track"><div class="bar-fill fill-g" style="width:85%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~80%</span><div class="bar-track"><div class="bar-fill fill-m" style="width:80%"></div></div></div></td>
+          </tr>
+          <tr>
+            <td>AIME 2025 <span class="row-note">Competition math</span></td>
+            <td><div class="score"><span class="score-num best">100%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-c" style="width:100%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~90%</span><div class="bar-track"><div class="bar-fill fill-s" style="width:90%"></div></div></div></td>
+            <td><div class="score"><span class="score-num best">100%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-g" style="width:100%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~88%</span><div class="bar-track"><div class="bar-fill fill-m" style="width:88%"></div></div></div></td>
+          </tr>
+          <tr>
+            <td>HLE <span class="row-note">Humanity's Last Exam</span></td>
+            <td><div class="score"><span class="score-num best">53%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-c" style="width:53%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~40%</span><div class="bar-track"><div class="bar-fill fill-s" style="width:40%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~45%</span><div class="bar-track"><div class="bar-fill fill-g" style="width:45%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~38%</span><div class="bar-track"><div class="bar-fill fill-m" style="width:38%"></div></div></div></td>
+          </tr>
+          <tr>
+            <td>MMLU <span class="row-note">Broad knowledge</span></td>
+            <td><div class="score"><span class="score-num">91%</span><div class="bar-track"><div class="bar-fill fill-c" style="width:91%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~88%</span><div class="bar-track"><div class="bar-fill fill-s" style="width:88%"></div></div></div></td>
+            <td><div class="score"><span class="score-num best">~92%<span class="best-star">★</span></span><div class="bar-track"><div class="bar-fill fill-g" style="width:92%"></div></div></div></td>
+            <td><div class="score"><span class="score-num">~89%</span><div class="bar-track"><div class="bar-fill fill-m" style="width:89%"></div></div></div></td>
+          </tr>
+
+          <tr class="section"><td colspan="5">Capabilities &amp; Features</td></tr>
+
+          <tr>
+            <td>Extended Thinking</td>
+            <td><span class="tag tag-new">Adaptive — 4 levels</span></td>
+            <td><span class="tag tag-new">Adaptive</span></td>
+            <td><span class="tag tag-yes">Configurable Modes</span></td>
+            <td><span class="tag tag-yes">Deep Think Mode</span></td>
+          </tr>
+          <tr>
+            <td>Agentic / Computer Use</td>
+            <td><span class="tag tag-new">★ Best-in-class</span></td>
+            <td><span class="tag tag-yes">Strong</span></td>
+            <td><span class="tag tag-yes">Strong</span></td>
+            <td><span class="tag tag-yes">Available</span></td>
+          </tr>
+          <tr>
+            <td>1M Token Context</td>
+            <td><span class="tag tag-beta">Beta</span></td>
+            <td><span class="tag tag-beta">Beta</span></td>
+            <td><span class="tag tag-no">No — max 400K</span></td>
+            <td><span class="tag tag-yes">Yes — GA</span></td>
+          </tr>
+          <tr>
+            <td>Context Compaction</td>
+            <td><span class="tag tag-new">Yes — Compaction API</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-no">No</span></td>
+            <td><span class="tag tag-no">No</span></td>
+          </tr>
+          <tr>
+            <td>Fast Mode</td>
+            <td><span class="tag tag-new">Yes — 2.5× speed</span></td>
+            <td><span class="tag tag-no">No</span></td>
+            <td><span class="tag tag-no">No</span></td>
+            <td><span class="tag tag-no">No</span></td>
+          </tr>
+          <tr>
+            <td>Tool / Function Calling</td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Native Web Search</td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes — Search Grounding</span></td>
+          </tr>
+          <tr>
+            <td>Image Understanding</td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Yes + Video + Audio</span></td>
+          </tr>
+          <tr>
+            <td>Data Residency Controls</td>
+            <td><span class="tag tag-yes">Yes — US / Global</span></td>
+            <td><span class="tag tag-yes">Yes</span></td>
+            <td><span class="tag tag-yes">Available</span></td>
+            <td><span class="tag tag-yes">Available</span></td>
+          </tr>
+
+          <tr class="section"><td colspan="5">Availability</td></tr>
+
+          <tr>
+            <td>API</td>
+            <td><span class="val">Anthropic API</span></td>
+            <td><span class="val">Anthropic API</span></td>
+            <td><span class="val">OpenAI API</span></td>
+            <td><span class="val">Google AI / Vertex AI</span></td>
+          </tr>
+          <tr>
+            <td>Cloud Platforms</td>
+            <td><span class="val">AWS · GCP · Azure</span></td>
+            <td><span class="val">AWS · GCP · Azure</span></td>
+            <td><span class="val">Azure · AWS</span></td>
+            <td><span class="best"><span class="val val-strong">GCP · AWS · Azure</span><span class="best-star">★</span></span></td>
+          </tr>
+          <tr>
+            <td>Consumer App</td>
+            <td><span class="val">claude.ai (Pro / Max)</span></td>
+            <td><span class="val">claude.ai (Pro+)</span></td>
+            <td><span class="val">ChatGPT (Plus / Pro)</span></td>
+            <td><span class="val">Gemini App (Free / Pro)</span></td>
+          </tr>
+
+          <tr class="section"><td colspan="5">Best Use Cases</td></tr>
+
+          <tr>
+            <td>Ideal For</td>
+            <td><span class="use-case highlight">Complex agentic workflows, massive codebases, long-context reasoning, multi-agent coordination</span></td>
+            <td><span class="use-case">Everyday coding, cost-effective deployments, most developer tasks</span></td>
+            <td><span class="use-case">Professional knowledge work, deep reasoning, math, analytical tasks</span></td>
+            <td><span class="use-case">Multimodal tasks (video / audio), Google ecosystem, large document processing</span></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="footnote">
+    <strong>Notes:</strong> Benchmark scores sourced from Anthropic, OpenAI, Google, and independent evaluations (Artificial Analysis, Feb–Mar 2026). Some scores are approximate or represent specific modes / configurations. "~" indicates estimated figures from third-party benchmarks. Sonnet 4.6 scores are partially estimated. Pricing reflects standard API rates; long-context (&gt;200K), fast mode, and data-residency tiers carry additional costs. <strong>★</strong> denotes best-in-class result per row.
+  </p>
+
+</div>
+</body>
+</html>
